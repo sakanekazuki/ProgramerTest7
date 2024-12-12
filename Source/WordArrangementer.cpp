@@ -12,7 +12,7 @@ WordArrangementer::WordArrangementer(int value1, int value2, int value3)
 	, value2(value2)
 	, value3(value3)
 {
-	srand(1752);
+	srand(1220);
 
 	charValues.push_back(value1);
 	charValues.push_back(value2);
@@ -31,21 +31,22 @@ void WordArrangementer::Arrangement()
 {
 	WordManager& wordManager = WordManager::Instance();
 
-	int startX = rand() % wordManager.GetMaxWidth();
-	int startY = rand() % wordManager.GetMaxHeight();
+	int x = rand() % wordManager.GetMaxWidth();
+	int y = rand() % wordManager.GetMaxHeight();
 
 	int charValueNum = (rand() % charValues.size());
 	// 文字数
 	int charValue = charValues[charValueNum];
 
 	// nullptrの場合配置されていないので配置できる
-	if (!wordManager.GetCharacter(startX, startY))
+	if (!wordManager.GetCharacter(x, y))
 	{
 		std::vector<Vector2> canSettingPoint;
 
 		while (charValues.size())
 		{
-			std::vector<Direction> dirs = AdjacentCheck(startX, startY);
+			std::vector<Vector2> dirs;
+			CheckSpace(x, y, dirs);
 			if (dirs.size() < charValue)
 			{
 				wordManager.ResetCharacters();
@@ -56,10 +57,12 @@ void WordArrangementer::Arrangement()
 				charValueNum = (rand() % charValues.size());
 				charValue = charValues[charValueNum];
 			}
+			std::shared_ptr<CCharacter> character(new CCharacter('0' + charValue));
 			for (int i = 0; i < charValue; ++i)
 			{
+				wordManager.SetCharacter(x, y, character);
 				// 設置できる方向取得
-				std::vector<Direction> directions = AdjacentCheck(startX, startY);
+				std::vector<Direction> directions = AdjacentCheck(x, y);
 				for (Direction dir : directions)
 				{
 					switch (dir)
@@ -68,40 +71,40 @@ void WordArrangementer::Arrangement()
 						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
 							[&](Vector2 vec)
 							{
-								return vec == Vector2(startX, startY - 1);
+								return vec == Vector2(x, y - 1);
 							}) == canSettingPoint.end())
 						{
-							canSettingPoint.push_back(Vector2(startX, startY - 1));
+							canSettingPoint.push_back(Vector2(x, y - 1));
 						}
 						break;
 					case Direction::down:
 						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
 							[&](Vector2 vec)
 							{
-								return vec == Vector2(startX, startY + 1);
+								return vec == Vector2(x, y + 1);
 							}) == canSettingPoint.end())
 						{
-							canSettingPoint.push_back(Vector2(startX, startY + 1));
+							canSettingPoint.push_back(Vector2(x, y + 1));
 						}
 						break;
 					case Direction::right:
 						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
 							[&](Vector2 vec)
 							{
-								return vec == Vector2(startX + 1, startY);
+								return vec == Vector2(x + 1, y);
 							}) == canSettingPoint.end())
 						{
-							canSettingPoint.push_back(Vector2(startX + 1, startY));
+							canSettingPoint.push_back(Vector2(x + 1, y));
 						}
 						break;
 					case Direction::left:
 						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
 							[&](Vector2 vec)
 							{
-								return vec == Vector2(startX - 1, startY);
+								return vec == Vector2(x - 1, y);
 							}) == canSettingPoint.end())
 						{
-							canSettingPoint.push_back(Vector2(startX - 1, startY));
+							canSettingPoint.push_back(Vector2(x - 1, y));
 						}
 						break;
 					}
@@ -114,64 +117,59 @@ void WordArrangementer::Arrangement()
 
 				int pointNum = rand() % canSettingPoint.size();
 				Vector2 point = canSettingPoint[pointNum];
-				std::shared_ptr<CCharacter> character(new CCharacter('0' + charValue));
-				wordManager.SetCharacter(point.x, point.y, character);
+				x = point.x;
+				y = point.y;
 
-				std::vector<Direction> addDirection = AdjacentCheck(point.x, point.y);
-
-				for (Direction dir : addDirection)
-				{
-					switch (dir)
-					{
-					case Direction::up:
-						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
-							[&](Vector2 vec)
-							{
-								return vec == Vector2(point.x, point.y - 1);
-							}) == canSettingPoint.end())
-						{
-							canSettingPoint.push_back(Vector2(point.x, point.y - 1));
-						}
-						break;
-					case Direction::down:
-						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
-							[&](Vector2 vec)
-							{
-								return vec == Vector2(point.x, point.y + 1);
-							}) == canSettingPoint.end())
-						{
-							canSettingPoint.push_back(Vector2(point.x, point.y + 1));
-						}
-						break;
-					case Direction::right:
-						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
-							[&](Vector2 vec)
-							{
-								return vec == Vector2(point.x + 1, point.y);
-							}) == canSettingPoint.end())
-						{
-							canSettingPoint.push_back(Vector2(point.x + 1, point.y));
-						}
-						break;
-					case Direction::left:
-						if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
-							[&](Vector2 vec)
-							{
-								return vec == Vector2(point.x - 1, point.y);
-							}) == canSettingPoint.end())
-						{
-							canSettingPoint.push_back(Vector2(point.x - 1, point.y));
-						}
-						break;
-					}
-				}
+				//std::vector<Direction> addDirection = AdjacentCheck(point.x, point.y);
+				//
+				//for (Direction dir : addDirection)
+				//{
+				//	switch (dir)
+				//	{
+				//	case Direction::up:
+				//		if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
+				//			[&](Vector2 vec)
+				//			{
+				//				return vec == Vector2(point.x, point.y - 1);
+				//			}) == canSettingPoint.end())
+				//		{
+				//			canSettingPoint.push_back(Vector2(point.x, point.y - 1));
+				//		}
+				//		break;
+				//	case Direction::down:
+				//		if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
+				//			[&](Vector2 vec)
+				//			{
+				//				return vec == Vector2(point.x, point.y + 1);
+				//			}) == canSettingPoint.end())
+				//		{
+				//			canSettingPoint.push_back(Vector2(point.x, point.y + 1));
+				//		}
+				//		break;
+				//	case Direction::right:
+				//		if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
+				//			[&](Vector2 vec)
+				//			{
+				//				return vec == Vector2(point.x + 1, point.y);
+				//			}) == canSettingPoint.end())
+				//		{
+				//			canSettingPoint.push_back(Vector2(point.x + 1, point.y));
+				//		}
+				//		break;
+				//	case Direction::left:
+				//		if (std::find_if(canSettingPoint.begin(), canSettingPoint.end(),
+				//			[&](Vector2 vec)
+				//			{
+				//				return vec == Vector2(point.x - 1, point.y);
+				//			}) == canSettingPoint.end())
+				//		{
+				//			canSettingPoint.push_back(Vector2(point.x - 1, point.y));
+				//		}
+				//		break;
+				//	}
+				//}
 
 				canSettingPoint.erase(canSettingPoint.begin() + pointNum);
-
-				if (!canSettingPoint.size())
-				{
-					break;
-				}
 			}
 			canSettingPoint.clear();
 			charValues.erase(charValues.begin() + charValueNum);
@@ -182,8 +180,8 @@ void WordArrangementer::Arrangement()
 			charValueNum = (rand() % charValues.size());
 			charValue = charValues[charValueNum];
 
-			startX = rand() % wordManager.GetMaxWidth();
-			startY = rand() % wordManager.GetMaxHeight();
+			x = rand() % wordManager.GetMaxWidth();
+			y = rand() % wordManager.GetMaxHeight();
 		}
 	}
 }
@@ -229,7 +227,7 @@ std::vector<Direction> WordArrangementer::AdjacentCheck(int width, int height)
 	return openDirections;
 }
 
-std::vector<Vector2> WordArrangementer::CheckSpace(int width, int height)
+void WordArrangementer::CheckSpace(int width, int height, std::vector<Vector2>& addPoints)
 {
 	// 設定されていない位置
 	std::vector<Vector2> points;
@@ -237,9 +235,16 @@ std::vector<Vector2> WordArrangementer::CheckSpace(int width, int height)
 	WordManager& wordManager = WordManager::Instance();
 	if (wordManager.GetCharacter(width, height))
 	{
-		return points;
+		return;
 	}
-	points.push_back(Vector2(width, height));
+	if (std::find_if(addPoints.begin(), addPoints.end(),
+		[&](Vector2 vec)
+		{
+			return vec == Vector2(width, height);
+		}) == addPoints.end())
+	{
+		points.push_back(Vector2(width, height));
+	}
 
 	// 調べる位置
 	Vector2 checkPoint(width, height);
@@ -252,25 +257,55 @@ std::vector<Vector2> WordArrangementer::CheckSpace(int width, int height)
 		switch (dir)
 		{
 		case Direction::up:
-			points.push_back(Vector2(width, height) + Vector2(0, -1));
+			if (std::find_if(addPoints.begin(), addPoints.end(),
+				[&](Vector2 vec)
+				{
+					return vec == (Vector2(width, height) + Vector2(0, -1));
+				}) == addPoints.end())
+			{
+				points.push_back(Vector2(width, height) + Vector2(0, -1));
+			}
 			break;
 		case Direction::down:
-			points.push_back(Vector2(width, height) + Vector2(0, 1));
+			if (std::find_if(addPoints.begin(), addPoints.end(),
+				[&](Vector2 vec)
+				{
+					return vec == (Vector2(width, height) + Vector2(0, 1));
+				}) == addPoints.end())
+			{
+				points.push_back(Vector2(width, height) + Vector2(0, 1));
+			}
 			break;
 		case Direction::right:
-			points.push_back(Vector2(width, height) + Vector2(1, 0));
+			if (std::find_if(addPoints.begin(), addPoints.end(),
+				[&](Vector2 vec)
+				{
+					return vec == (Vector2(width, height) + Vector2(1, 0));
+				}) == addPoints.end())
+			{
+				points.push_back(Vector2(width, height) + Vector2(1, 0));
+			}
 			break;
 		case Direction::left:
-			points.push_back(Vector2(width, height) + Vector2(-1, 0));
+			if (std::find_if(addPoints.begin(), addPoints.end(),
+				[&](Vector2 vec)
+				{
+					return vec == (Vector2(width, height) + Vector2(-1, 0));
+				}) == addPoints.end())
+			{
+				points.push_back(Vector2(width, height) + Vector2(-1, 0));
+			}
 			break;
-		}
-		std::vector<Vector2> addPoints = CheckSpace(points.back().x, points.back().y);
-
-		for (auto addPoint : addPoints)
-		{
-			points.push_back(addPoint);
 		}
 	}
 
-	return points;
+	for (auto addPoint : points)
+	{
+		addPoints.push_back(addPoint);
+	}
+
+	if (points.size())
+	{
+		CheckSpace(points.back().x, points.back().y, addPoints);
+	}
 }

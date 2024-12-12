@@ -1,5 +1,7 @@
 #include "Character.h"
 
+#include <iostream>
+
 CCharacter::CCharacter(char c)
 	:c(c){}
 

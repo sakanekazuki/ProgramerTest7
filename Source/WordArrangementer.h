@@ -21,7 +21,7 @@ public:
 private:
 	void Arrangement();
 	std::vector<Direction> AdjacentCheck(int width, int height);
-	std::vector<Vector2> CheckSpace(int width, int height);
+	void CheckSpace(int width, int height, std::vector<Vector2>& addPoints);
 
 	// •¶š”
 	std::vector<int> charValues;
